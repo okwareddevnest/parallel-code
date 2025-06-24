@@ -6,7 +6,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const argv = yargs(hideBin(process.argv))
-  .command('start', 'Start the ParallelCode MCP server', {
+  .command('start', 'Start the ParallelCode WebSocket collaboration server', {
     port: {
       alias: 'p',
       type: 'number',
@@ -20,6 +20,7 @@ const argv = yargs(hideBin(process.argv))
       description: 'Host to bind the server to'
     }
   })
+  .command('mcp', 'Run as MCP server for client integration (STDIO)')
   .command('version', 'Show version information')
   .help()
   .alias('help', 'h')
@@ -31,6 +32,9 @@ switch (command) {
   case 'start':
     startServer(argv.port, argv.host);
     break;
+  case 'mcp':
+    startMCPServer();
+    break;
   case 'version':
     showVersion();
     break;
@@ -38,17 +42,18 @@ switch (command) {
     console.log('🧠 ParallelCode MCP Server');
     console.log('');
     console.log('Usage:');
-    console.log('  npx @okwareddevnest/parallel-code start    Start the server');
-    console.log('  npx @okwareddevnest/parallel-code version  Show version');
+    console.log('  npx parallel-code-mcp-server start    Start WebSocket collaboration server');
+    console.log('  npx parallel-code-mcp-server mcp      Run as MCP server (for Cursor/Claude)');
+    console.log('  npx parallel-code-mcp-server version  Show version');
     console.log('');
-    console.log('Options:');
+    console.log('Options for start:');
     console.log('  -p, --port <number>  Port to run on (default: 8080)');
     console.log('  -h, --host <string>  Host to bind to (default: localhost)');
     console.log('');
     console.log('Examples:');
-    console.log('  npx @okwareddevnest/parallel-code start');
-    console.log('  npx @okwareddevnest/parallel-code start -p 3000');
-    console.log('  npx @okwareddevnest/parallel-code start -h 0.0.0.0 -p 8080');
+    console.log('  npx parallel-code-mcp-server start');
+    console.log('  npx parallel-code-mcp-server start -p 3000');
+    console.log('  npx parallel-code-mcp-server mcp  # For MCP client integration');
 }
 
 function startServer(port, host) {
@@ -81,6 +86,38 @@ function startServer(port, host) {
   process.on('SIGTERM', () => {
     console.log('\n🛑 Shutting down ParallelCode MCP Server...');
     serverProcess.kill('SIGTERM');
+  });
+}
+
+function startMCPServer() {
+  console.error('🧠 Starting ParallelCode MCP Server (STDIO mode)');
+  
+  const mcpServerPath = path.join(__dirname, '..', 'mcp-server.js');
+  const mcpProcess = spawn('node', [mcpServerPath], {
+    stdio: 'inherit'
+  });
+  
+  mcpProcess.on('error', (error) => {
+    console.error('Failed to start MCP server:', error);
+    process.exit(1);
+  });
+  
+  mcpProcess.on('exit', (code) => {
+    if (code !== 0) {
+      console.error(`MCP server exited with code ${code}`);
+      process.exit(code);
+    }
+  });
+  
+  // Handle graceful shutdown
+  process.on('SIGINT', () => {
+    console.error('\n🛑 Shutting down ParallelCode MCP Server...');
+    mcpProcess.kill('SIGINT');
+  });
+  
+  process.on('SIGTERM', () => {
+    console.error('\n🛑 Shutting down ParallelCode MCP Server...');
+    mcpProcess.kill('SIGTERM');
   });
 }
 

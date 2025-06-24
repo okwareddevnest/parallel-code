@@ -46,9 +46,36 @@ npm test
 
 ## Usage
 
-### WebSocket Connection
+### MCP Client Integration (Cursor AI, Claude Desktop)
+
+For integration with MCP clients like Cursor AI:
+
+```bash
+# Run as MCP server
+npx parallel-code-mcp-server mcp
+```
+
+**Cursor AI Setup:**
+1. Go to Cursor Settings → MCP Servers
+2. Add new server with command: `npx parallel-code-mcp-server mcp`
+3. Enable the server
+4. Use the collaboration tools in your AI prompts
+
+**Available MCP Tools:**
+- `broadcast_message` - Send messages to other AI agents
+- `lock_file` - Lock files to prevent editing conflicts  
+- `unlock_file` - Release file locks
+- `announce_work` - Announce what you're working on
+- `get_collaboration_status` - Check connected agents and locks
+
+### WebSocket Connection (Direct Integration)
 
 Connect to the server using WebSocket with a client ID:
+
+```bash
+# Start WebSocket server
+npx parallel-code-mcp-server start
+```
 
 ```javascript
 const ws = new WebSocket('ws://localhost:8080/?id=your_client_id');
