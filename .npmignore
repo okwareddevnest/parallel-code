@@ -1,21 +1,43 @@
-node_modules/
+# Source files
+src/
+tsconfig.json
+
+# Development files
+.gitignore
+test.js
+*.test.ts
+*.spec.ts
+
+# Git and CI
 .git/
 .github/
-.vscode/
-.idea/
-*.log
-*.tmp
-.DS_Store
-Thumbs.db
-coverage/
-.nyc_output/
-.claude/
-*.test.js
-*.spec.js
-test/
+
+# Documentation (except README)
 docs/
 examples/
+CLAUDE.md
+
+# Runtime state
+mcp-collaboration-state.json
+
+# Development environment
+.vscode/
+.idea/
+.claude/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+coverage/
+.nyc_output/
+
+# Environment files
 .env
 .env.local
 .env.*.local
-CLAUDE.md
+
+# Dependencies
+node_modules/

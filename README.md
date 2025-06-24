@@ -1,159 +1,171 @@
-# 🧠 ParallelCode MCP Server
+# Parallel Code MCP Server
 
-A collaborative MCP (Model Context Protocol) server that enables real-time communication between AI coding assistants. Built with Node.js and WebSockets.
+A Model Context Protocol server that enables collaborative AI coding with conflict prevention. This server allows multiple AI assistants to coordinate their work, share messages, and manage file locks to prevent editing conflicts.
 
 ## Features
 
-- **Multi-client WebSocket connections** with unique client IDs
-- **Real-time message broadcasting** between connected clients
-- **File locking mechanism** to prevent editing conflicts
-- **Connection health monitoring** with ping/pong heartbeat
-- **REST API** for server status and lock information
-- **Web-based test client** for development and debugging
+- **🔒 File Locking** - Prevent multiple agents from editing the same file simultaneously
+- **📢 Message Broadcasting** - Coordinate between AI agents with real-time messaging  
+- **📊 Collaboration Status** - Track active locks and system state
+- **🎯 Work Announcements** - Announce planned work to coordinate with other agents
+- **⚡ Real-time Coordination** - Built on the Model Context Protocol for seamless integration
 
-## Quick Start
+## Security Warning
 
-### Install and Run
+This server can access and lock files in your project directory. Ensure you trust the AI agents that will be using this server, as they can potentially lock important files and affect your development workflow.
+
+## Installation
+
+### Using npm (recommended)
 
 ```bash
-# Run directly with npx (recommended)
-npx parallel-code-mcp-server start
-
-# Or install globally
 npm install -g parallel-code-mcp-server
-parallel-code start
-
-# Custom port and host
-npx parallel-code-mcp-server start -p 3000 -h 0.0.0.0
 ```
 
-The server will start on `http://localhost:8080` by default
-
-### Development
+### Using npx
 
 ```bash
-# Clone and install dependencies
+npx parallel-code-mcp-server
+```
+
+## Usage
+
+### With Claude Desktop
+
+Add to your Claude Desktop configuration file:
+
+**MacOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows**: `%APPDATA%/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "parallel-code": {
+      "command": "parallel-code-mcp-server"
+    }
+  }
+}
+```
+
+### With Cursor AI
+
+1. Go to Cursor Settings → Extensions → MCP
+2. Add new MCP server
+3. Server name: `parallel-code`
+4. Command: `parallel-code-mcp-server`
+5. Enable the server
+
+## Available Tools
+
+### `broadcast_message`
+Send a message to coordinate with other AI agents.
+
+```typescript
+{
+  message: string,           // Required: Message content
+  type?: string,            // Optional: broadcast, update, announcement, status
+  file?: string             // Optional: Related file path
+}
+```
+
+### `lock_file`
+Lock a file to prevent editing conflicts.
+
+```typescript
+{
+  file: string,             // Required: File path to lock
+  reason?: string           // Optional: Reason for locking
+}
+```
+
+### `unlock_file`
+Release a file lock.
+
+```typescript
+{
+  file: string              // Required: File path to unlock
+}
+```
+
+### `announce_work`
+Announce your planned work to other agents.
+
+```typescript
+{
+  action: string,           // Required: Description of work
+  files?: string[],         // Optional: List of files you'll work on
+  estimated_time?: string   // Optional: Time estimate
+}
+```
+
+### `get_collaboration_status`
+Get current collaboration state.
+
+```typescript
+{} // No parameters required
+```
+
+## Example Usage
+
+```typescript
+// Announce your work
+await mcp.call('announce_work', {
+  action: 'Implementing user authentication system',
+  files: ['src/auth.ts', 'src/user.ts'],
+  estimated_time: '30 minutes'
+});
+
+// Lock a file before editing
+await mcp.call('lock_file', {
+  file: 'src/auth.ts',
+  reason: 'Adding login validation'
+});
+
+// Broadcast a status update
+await mcp.call('broadcast_message', {
+  message: 'Authentication system is ready for testing',
+  type: 'announcement',
+  file: 'src/auth.ts'
+});
+
+// Unlock when done
+await mcp.call('unlock_file', {
+  file: 'src/auth.ts'
+});
+```
+
+## Development
+
+```bash
+# Clone the repository
 git clone https://github.com/okwareddevnest/parallel-code.git
 cd parallel-code
+
+# Install dependencies
 npm install
 
-# Start development server
+# Build the project
+npm run build
+
+# Run in development mode
 npm run dev
 
 # Run tests
 npm test
 ```
 
-## Usage
+## State Management
 
-### MCP Client Integration (Cursor AI, Claude Desktop)
+The server maintains collaboration state in `mcp-collaboration-state.json` in your working directory. This file tracks:
 
-For integration with MCP clients like Cursor AI:
+- Active file locks
+- Connected agents
+- Last activity timestamp
 
-```bash
-# Run as MCP server
-npx parallel-code-mcp-server mcp
-```
+## License
 
-**Cursor AI Setup:**
-1. Go to Cursor Settings → MCP Servers
-2. Add new server with command: `npx parallel-code-mcp-server mcp`
-3. Enable the server
-4. Use the collaboration tools in your AI prompts
+Licensed under the AGPL-3.0 License. See LICENSE file for details.
 
-**Available MCP Tools:**
-- `broadcast_message` - Send messages to other AI agents
-- `lock_file` - Lock files to prevent editing conflicts  
-- `unlock_file` - Release file locks
-- `announce_work` - Announce what you're working on
-- `get_collaboration_status` - Check connected agents and locks
+## Contributing
 
-### WebSocket Connection (Direct Integration)
-
-Connect to the server using WebSocket with a client ID:
-
-```bash
-# Start WebSocket server
-npx parallel-code-mcp-server start
-```
-
-```javascript
-const ws = new WebSocket('ws://localhost:8080/?id=your_client_id');
-```
-
-### Message Format
-
-All messages follow this structure:
-
-```json
-{
-  "sender": "client_id",
-  "type": "message_type",
-  "file": "path/to/file",
-  "content": "message content",
-  "timestamp": "2025-06-24T17:52:00Z"
-}
-```
-
-### Message Types
-
-- **`broadcast`** - Send message to all other clients
-- **`update`** - File update notification
-- **`lock`** - Request file lock
-- **`unlock`** - Release file lock
-- **`ping`** - Heartbeat message
-
-### File Locking
-
-Request a file lock before editing:
-
-```json
-{
-  "type": "lock",
-  "file": "src/components/App.js"
-}
-```
-
-Release the lock when done:
-
-```json
-{
-  "type": "unlock",
-  "file": "src/components/App.js"
-}
-```
-
-## API Endpoints
-
-- **`GET /api/status`** - Server status and connected clients
-- **`GET /api/locks`** - Current file locks
-
-## Test Client
-
-Open `http://localhost:8080/test.html` to access the web-based test client for development and debugging.
-
-## Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Client A      │    │   MCP Server    │    │   Client B      │
-│   (Claude)      │◄──►│                 │◄──►│   (Cursor)      │
-└─────────────────┘    │  - WebSocket    │    └─────────────────┘
-                       │  - File Locks   │
-                       │  - Broadcasting │
-                       └─────────────────┘
-```
-
-## Example Usage
-
-1. Start the server: `npm start`
-2. Open test client: `http://localhost:8080/test.html`
-3. Connect with client ID: `claude`
-4. Send broadcast message to communicate with other clients
-5. Use file locks to coordinate editing
-
-## Development
-
-The server maintains file locks in `mcp-locks.json` and automatically cleans up locks when clients disconnect.
-
-Connection health is monitored with 30-second ping intervals to detect and terminate dead connections.
+We encourage contributions to help expand and improve the server. Please feel free to submit issues, feature requests, and pull requests.
