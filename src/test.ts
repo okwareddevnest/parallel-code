@@ -92,7 +92,7 @@ try {
 // Test 7: Check if server can be imported
 try {
   const serverContent = readFileSync(join(__dirname, '..', 'dist/index.js'), 'utf8');
-  if (serverContent.includes('McpServer') && serverContent.includes('StdioServerTransport')) {
+  if (serverContent.includes('Server') && serverContent.includes('StdioServerTransport')) {
     console.log('✅ Server implementation looks correct');
   } else {
     console.error('❌ Server implementation missing required components');

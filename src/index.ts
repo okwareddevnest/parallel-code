@@ -1,21 +1,37 @@
 #!/usr/bin/env node
 
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
 import { CollaborationManager } from './collaboration-manager.js';
-import { registerTools } from './tools.js';
+import { getTools, handleToolCall } from './tools.js';
 
 // Initialize collaboration manager
 const collaboration = new CollaborationManager();
 
 // Create MCP server
-const server = new McpServer({
+const server = new Server({
   name: 'parallel-code-collaboration',
-  version: '2.0.0',
+  version: '2.3.0',
+}, {
+  capabilities: {
+    tools: {},
+  },
 });
 
-// Register all collaboration tools
-registerTools(server, collaboration);
+// Register tool listing handler
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: getTools(),
+}));
+
+// Register tool execution handler
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+  return await handleToolCall(name, args || {}, collaboration);
+});
 
 // Main function to run the server
 async function main() {

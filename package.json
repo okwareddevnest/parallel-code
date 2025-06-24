@@ -1,6 +1,6 @@
 {
   "name": "parallel-code-mcp-server",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "MCP server for enabling collaborative AI coding with conflict prevention",
   "type": "module",
   "main": "dist/index.js",
@@ -21,7 +21,7 @@
   "keywords": [
     "mcp",
     "model-context-protocol",
-    "websocket", 
+    "websocket",
     "collaboration",
     "ai",
     "coding",
@@ -43,10 +43,11 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.13.1",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.24.5"
   },
   "devDependencies": {
-    "typescript": "^5.5.4",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.4"
   }
 }
