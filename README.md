@@ -47,6 +47,18 @@ Add to your Claude Desktop configuration file:
 }
 ```
 
+**Alternative if PATH issues occur:**
+```json
+{
+  "mcpServers": {
+    "parallel-code": {
+      "command": "npx",
+      "args": ["parallel-code-mcp-server"]
+    }
+  }
+}
+```
+
 ### With Cursor AI
 
 1. Go to Cursor Settings → Extensions → MCP
@@ -54,6 +66,10 @@ Add to your Claude Desktop configuration file:
 3. Server name: `parallel-code`
 4. Command: `parallel-code-mcp-server`
 5. Enable the server
+
+**Note**: If you get "0 tools" or red status, ensure your Node.js PATH is available to Cursor:
+- Restart Cursor completely after installation
+- If still not working, try using the full path: `npx parallel-code-mcp-server`
 
 ## Available Tools
 

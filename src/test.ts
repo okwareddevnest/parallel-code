@@ -68,10 +68,10 @@ if (packageJson.name === 'parallel-code-mcp-server') {
 
 // Test 5: Check bin naming
 const binName = Object.keys(packageJson.bin)[0];
-if (binName === 'parallel-code-mcp') {
+if (binName === 'parallel-code-mcp-server') {
   console.log('✅ Binary name is correct');
 } else {
-  console.error('❌ Binary name should be parallel-code-mcp');
+  console.error('❌ Binary name should be parallel-code-mcp-server');
   allTestsPassed = false;
 }
 

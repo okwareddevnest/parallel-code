@@ -1,11 +1,11 @@
 {
   "name": "parallel-code-mcp-server",
-  "version": "2.3.0",
+  "version": "2.3.3",
   "description": "MCP server for enabling collaborative AI coding with conflict prevention",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "parallel-code-mcp": "./dist/index.js"
+    "parallel-code-mcp-server": "./dist/index.js"
   },
   "files": [
     "dist"

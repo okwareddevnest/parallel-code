@@ -15,7 +15,7 @@ const collaboration = new CollaborationManager();
 // Create MCP server
 const server = new Server({
   name: 'parallel-code-collaboration',
-  version: '2.3.0',
+  version: '2.3.3',
 }, {
   capabilities: {
     tools: {},
