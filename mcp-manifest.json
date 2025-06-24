@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "0.1.0",
+  "name": "parallel-code-mcp-server",
+  "version": "1.0.1",
+  "description": "Collaborative MCP server for AI coding assistants",
+  "author": "ParallelCode Team",
+  "license": "MIT",
+  "homepage": "https://github.com/okwareddevnest/parallel-code",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/okwareddevnest/parallel-code.git"
+  },
+  "server": {
+    "command": "npx",
+    "args": ["parallel-code-mcp-server", "start"],
+    "env": {}
+  },
+  "capabilities": {
+    "resources": [],
+    "tools": [
+      {
+        "name": "broadcast_message",
+        "description": "Broadcast a message to all connected AI agents",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "description": "Message to broadcast"
+            },
+            "type": {
+              "type": "string",
+              "enum": ["broadcast", "update", "announcement"],
+              "description": "Type of message"
+            }
+          },
+          "required": ["message"]
+        }
+      },
+      {
+        "name": "lock_file",
+        "description": "Lock a file to prevent concurrent editing",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string",
+              "description": "File path to lock"
+            }
+          },
+          "required": ["file"]
+        }
+      },
+      {
+        "name": "unlock_file",
+        "description": "Release a file lock",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "file": {
+              "type": "string", 
+              "description": "File path to unlock"
+            }
+          },
+          "required": ["file"]
+        }
+      },
+      {
+        "name": "get_server_status",
+        "description": "Get current server status and connected clients",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    ],
+    "prompts": []
+  },
+  "mcpVersion": "0.1.0"
+}
