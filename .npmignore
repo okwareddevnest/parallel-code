@@ -18,3 +18,4 @@ examples/
 .env
 .env.local
 .env.*.local
+CLAUDE.md

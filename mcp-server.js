@@ -1,12 +1,8 @@
 #!/usr/bin/env node
 
-const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
+const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
-const {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} = require('@modelcontextprotocol/sdk/types.js');
-const WebSocket = require('ws');
+const { z } = require('zod');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
@@ -36,138 +32,74 @@ function saveLocks() {
 }
 
 // Create MCP server
-const server = new Server(
+const server = new McpServer({
+  name: 'parallel-code-mcp-server',
+  version: '1.1.0',
+});
+
+// Register MCP tools using new API
+server.registerTool(
+  'broadcast_message',
   {
-    name: 'parallel-code-mcp-server',
-    version: '1.0.1',
+    title: 'Broadcast Message',
+    description: 'Broadcast a message to all connected AI agents in the collaboration session',
+    inputSchema: {
+      message: z.string().describe('Message to broadcast to all connected agents'),
+      type: z.enum(['broadcast', 'update', 'announcement', 'status']).optional().describe('Type of message being sent'),
+      file: z.string().optional().describe('Optional file path if the message relates to a specific file'),
+    }
   },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
+  async (params) => handleBroadcastMessage(params, process.env.MCP_CLIENT_ID || uuidv4())
 );
 
-// Define MCP tools
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: 'broadcast_message',
-        description: 'Broadcast a message to all connected AI agents in the collaboration session',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            message: {
-              type: 'string',
-              description: 'Message to broadcast to all connected agents',
-            },
-            type: {
-              type: 'string',
-              enum: ['broadcast', 'update', 'announcement', 'status'],
-              description: 'Type of message being sent',
-              default: 'broadcast'
-            },
-            file: {
-              type: 'string',
-              description: 'Optional file path if the message relates to a specific file',
-            }
-          },
-          required: ['message'],
-        },
-      },
-      {
-        name: 'lock_file',
-        description: 'Lock a file to prevent other agents from editing it simultaneously',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            file: {
-              type: 'string',
-              description: 'File path to lock for exclusive editing',
-            },
-            reason: {
-              type: 'string',
-              description: 'Optional reason for locking the file',
-            }
-          },
-          required: ['file'],
-        },
-      },
-      {
-        name: 'unlock_file',
-        description: 'Release a file lock to allow other agents to edit it',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            file: {
-              type: 'string',
-              description: 'File path to unlock',
-            }
-          },
-          required: ['file'],
-        },
-      },
-      {
-        name: 'get_collaboration_status',
-        description: 'Get current collaboration status including connected agents and file locks',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      },
-      {
-        name: 'announce_work',
-        description: 'Announce what work you are starting to do to coordinate with other agents',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            action: {
-              type: 'string',
-              description: 'What action you are taking (e.g., "implementing login feature", "fixing bug in utils.js")',
-            },
-            files: {
-              type: 'array',
-              items: { type: 'string' },
-              description: 'List of files you will be working on',
-            },
-            estimated_time: {
-              type: 'string',
-              description: 'Estimated time to complete (e.g., "10 minutes", "1 hour")',
-            }
-          },
-          required: ['action'],
-        },
-      }
-    ],
-  };
-});
+server.registerTool(
+  'lock_file',
+  {
+    title: 'Lock File',
+    description: 'Lock a file to prevent other agents from editing it simultaneously',
+    inputSchema: {
+      file: z.string().describe('File path to lock for exclusive editing'),
+      reason: z.string().optional().describe('Optional reason for locking the file'),
+    }
+  },
+  async (params) => handleLockFile(params, process.env.MCP_CLIENT_ID || uuidv4())
+);
 
-// Handle tool calls
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
-  const clientId = process.env.MCP_CLIENT_ID || uuidv4();
+server.registerTool(
+  'unlock_file',
+  {
+    title: 'Unlock File',
+    description: 'Release a file lock to allow other agents to edit it',
+    inputSchema: {
+      file: z.string().describe('File path to unlock'),
+    }
+  },
+  async (params) => handleUnlockFile(params, process.env.MCP_CLIENT_ID || uuidv4())
+);
 
-  switch (name) {
-    case 'broadcast_message':
-      return handleBroadcastMessage(args, clientId);
-    
-    case 'lock_file':
-      return handleLockFile(args, clientId);
-    
-    case 'unlock_file':
-      return handleUnlockFile(args, clientId);
-    
-    case 'get_collaboration_status':
-      return handleGetStatus();
-    
-    case 'announce_work':
-      return handleAnnounceWork(args, clientId);
-    
-    default:
-      throw new Error(`Unknown tool: ${name}`);
-  }
-});
+server.registerTool(
+  'get_collaboration_status',
+  {
+    title: 'Get Collaboration Status',
+    description: 'Get current collaboration status including connected agents and file locks',
+    inputSchema: {}
+  },
+  async (params) => handleGetStatus()
+);
+
+server.registerTool(
+  'announce_work',
+  {
+    title: 'Announce Work',
+    description: 'Announce what work you are starting to do to coordinate with other agents',
+    inputSchema: {
+      action: z.string().describe('What action you are taking (e.g., "implementing login feature", "fixing bug in utils.js")'),
+      files: z.array(z.string()).optional().describe('List of files you will be working on'),
+      estimated_time: z.string().optional().describe('Estimated time to complete (e.g., "10 minutes", "1 hour")'),
+    }
+  },
+  async (params) => handleAnnounceWork(params, process.env.MCP_CLIENT_ID || uuidv4())
+);
 
 // Tool handlers
 async function handleBroadcastMessage(args, clientId) {
