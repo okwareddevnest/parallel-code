@@ -38,3 +38,5 @@ coverage/
 # Cache directories
 .cache/
 .parcel-cache/
+
+CLAUDE.md
